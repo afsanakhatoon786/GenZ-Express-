@@ -10,18 +10,13 @@ public_folder: "/images/uploads"
 collections:
   - name: "news"
     label: "News Articles"
-    files:
-      - file: "news.json"
-        label: "All News Articles"
-        name: "news_list"
-        fields:
-          - label: "Articles List"
-            name: "articles"
-            widget: "list"
-            fields:
-              - {label: "Title (Khabar Ka Naam)", name: "title", widget: "string"}
-              - {label: "Category", name: "category", widget: "string", default: "General"}
-              - {label: "Date", name: "date", widget: "string"}
-              - {label: "Article Image", name: "image", widget: "image"}
-              - {label: "Full Description (Khabar Ka Vivaran)", name: "description", widget: "text"}
-              
+    folder: "content/news"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - {label: "Title (Khabar Ka Naam)", name: "title", widget: "string"}
+      - {label: "Category", name: "category", widget: "string", default: "General"}
+      - {label: "Date", name: "date", widget: "string"}
+      - {label: "Article Image", name: "image", widget: "image"}
+      - {label: "Full Description (Khabar Ka Vivaran)", name: "description", widget: "text"}
+      

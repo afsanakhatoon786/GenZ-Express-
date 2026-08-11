@@ -42,68 +42,39 @@
   </div>
 
   <script>
-    async function fetchNews() {
+    async function loadArticles() {
       const newsGrid = document.getElementById('newsGrid');
       try {
-        const repoUrl = 'https://api.github.com/repos/afsanakhatoon786/GenZ-Express/contents/content/news';
-        const res = await fetch(repoUrl);
-        const files = await res.json();
-        
-        const markdownFiles = files.filter(f => f.name !== 'placeholder.txt');
+        const response = await fetch('news.json?v=' + new Date().getTime());
+        const data = await response.json();
+        const articles = Array.isArray(data) ? data : (data.articles || []);
 
-        if (!markdownFiles || markdownFiles.length === 0) {
-          newsGrid.innerHTML = '<p>Abhi koi article nahi hai. Admin panel se post karein!</p>';
+        if (!articles || articles.length === 0) {
+          newsGrid.innerHTML = '<p>Abhi koi article nahi hai. Admin panel se pehla article post karein!</p>';
           return;
         }
 
         newsGrid.innerHTML = '';
-
-        for (let file of markdownFiles) {
-          const rawRes = await fetch(file.download_url);
-          const text = await rawRes.text();
-
-          let title = '', date = '', category = '', image = '', description = '';
-
-          if (text.startsWith('---')) {
-            const parts = text.split('---');
-            const metaLines = parts[1].split('\n');
-            description = parts.slice(2).join('---').trim();
-
-            metaLines.forEach(line => {
-              const colonIdx = line.indexOf(':');
-              if (colonIdx !== -1) {
-                const key = line.slice(0, colonIdx).trim();
-                let val = line.slice(colonIdx + 1).trim().replace(/^["']|["']$/g, '');
-                if (key === 'title') title = val;
-                if (key === 'date') date = val;
-                if (key === 'category') category = val;
-                if (key.trim() === 'image') image = val;
-                if (key === 'description' && !description) description = val;
-              }
-            });
-          } else {
-            description = text;
-          }
-
+        articles.forEach(article => {
           const card = document.createElement('div');
           card.className = 'news-card';
           card.innerHTML = `
-            <img src="${image || 'https://via.placeholder.com/300x180'}" alt="News Image">
+            <img src="${article.image || 'https://via.placeholder.com/300x180'}" alt="News Image">
             <div class="news-content">
-              <span class="news-tag">${category || 'General'}</span>
-              <div class="news-date">🗓️ ${date || ''}</div>
-              <h3 class="news-title">${title || file.name}</h3>
-              <p class="news-desc">${description}</p>
+              <span class="news-tag">${article.category || 'General'}</span>
+              <div class="news-date">🗓️ ${article.date || ''}</div>
+              <h3 class="news-title">${article.title || 'News Article'}</h3>
+              <p class="news-desc">${article.description || ''}</p>
             </div>
           `;
           newsGrid.appendChild(card);
-        }
-      } catch (err) {
-        newsGrid.innerHTML = '<p>Khabar load karne mein dikkat aayi. Kripya page refresh karein.</p>';
+        });
+      } catch (error) {
+        newsGrid.innerHTML = '<p>Khabar load karne mein dikkat aayi.</p>';
       }
     }
 
-    window.onload = fetchNews;
+    window.onload = loadArticles;
   </script>
 
 </body>

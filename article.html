@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Article Detail | GenZ Express</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-red: #d32f2f;
+      --header-bg: #111827;
+      --text-dark: #1f2937;
+      --bg-light: #f3f4f6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: var(--bg-light); color: var(--text-dark); line-height: 1.7; }
+
+    header { background: var(--header-bg); color: white; padding: 12px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+    .header-container { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .brand-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight: 800; font-size: 20px; text-transform: uppercase; }
+    .brand-logo span { color: var(--primary-red); }
+
+    .article-layout { max-width: 1000px; margin: 25px auto; padding: 0 15px; display: grid; grid-template-columns: 3fr 1fr; gap: 25px; }
+    .article-card { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb; }
+    
+    .article-tag { background: #fee2e2; color: var(--primary-red); font-size: 12px; padding: 4px 12px; border-radius: 20px; font-weight: 700; text-transform: uppercase; display: inline-block; margin-bottom: 12px; }
+    .article-title { font-size: 24px; font-weight: 800; color: #111827; margin-bottom: 10px; line-height: 1.4; }
+    .article-date { font-size: 12px; color: #6b7280; margin-bottom: 20px; border-bottom: 1px solid #f3f4f6; padding-bottom: 12px; }
+    
+    .article-image { width: 100%; max-height: 420px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; background: #e5e7eb; }
+    .article-body { font-size: 16px; color: #374151; white-space: pre-wrap; line-height: 1.8; }
+
+    .ad-box { background: #e5e7eb; border: 2px dashed #9ca3af; text-align: center; padding: 20px; font-weight: bold; color: #4b5563; border-radius: 8px; margin: 20px 0; font-size: 13px; }
+    
+    footer { background: var(--header-bg); color: #9ca3af; margin-top: 50px; padding: 20px; text-align: center; font-size: 13px; border-top: 4px solid var(--primary-red); }
+
+    @media (max-width: 768px) {
+      .article-layout { grid-template-columns: 1fr; }
+      .article-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-title">GenZ <span>Express</span></div>
+      </a>
+      <a href="index.html" style="color: white; text-decoration: none; font-size: 14px; font-weight: 600;"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+    </div>
+  </header>
+
+  <div class="article-layout">
+    <main>
+      <div class="article-card" id="articleContainer">
+        <p>Article load ho raha hai...</p>
+      </div>
+    </main>
+
+    <aside class="sidebar">
+      <div class="ad-box" style="padding: 60px 10px;">
+        📢 ARTICLE SIDEBAR AD SPACE
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    &copy; 2026 GenZ Express. All Rights Reserved.
+  </footer>
+
+  <script>
+    const defaultImg = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop";
+
+    async function loadFullArticle() {
+      const container = document.getElementById('articleContainer');
+      const urlParams = new URLSearchParams(window.location.search);
+      const articleId = urlParams.get('id');
+
+      if (articleId === null) {
+        container.innerHTML = '<p>Article nahi mila. <a href="index.html">Home page par jayein</a></p>';
+        return;
+      }
+
+      try {
+        const response = await fetch('news.json?v=' + new Date().getTime());
+        const data = await response.json();
+        const articles = Array.isArray(data) ? data : (data.articles || []);
+        
+        const article = articles[articleId];
+
+        if (!article) {
+          container.innerHTML = '<p>Article maujood nahi hai.</p>';
+          return;
+        }
+
+        document.title = article.title + " | GenZ Express";
+
+        container.innerHTML = `
+          <span class="article-tag">${article.category || 'General'}</span>
+          <h1 class="article-title">${article.title || ''}</h1>
+          <div class="article-date"><i class="fa-regular fa-calendar-days"></i> Published on: ${article.date || ''}</div>
+          
+          <div class="ad-box">📢 AD SPACE (Inside Article Top)</div>
+
+          <img class="article-image" src="${article.image || defaultImg}" onerror="this.src='${defaultImg}'" alt="News Image">
+          
+          <div class="article-body">${article.description || ''}</div>
+          
+          <div class="ad-box">📢 AD SPACE (Inside Article Bottom)</div>
+        `;
+      } catch (e) {
+        container.innerHTML = '<p>Error loading article content.</p>';
+      }
+    }
+
+    window.onload = loadFullArticle;
+  </script>
+</body>
+</html>

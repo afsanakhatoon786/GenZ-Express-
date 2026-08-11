@@ -10,15 +10,25 @@
     header { background: #cc0000; color: white; padding: 15px; text-align: center; }
     .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; display: grid; grid-template-columns: 3fr 1fr; gap: 20px; }
     .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-    .news-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+    .news-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s; }
+    .news-card:hover { transform: translateY(-3px); }
     .news-card img { width: 100%; height: 180px; object-fit: cover; background: #e4e6eb; }
     .news-content { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
     .news-tag { background: #ffebee; color: #cc0000; font-size: 11px; padding: 3px 8px; border-radius: 4px; width: fit-content; margin-bottom: 8px; font-weight: bold; }
     .news-title { font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #111; line-height: 1.3; }
-    .news-desc { font-size: 13px; color: #555; margin-bottom: 12px; flex-grow: 1; line-height: 1.4; white-space: pre-line; }
+    .news-desc { font-size: 13px; color: #555; margin-bottom: 12px; flex-grow: 1; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     .news-date { font-size: 11px; color: #888; margin-bottom: 10px; }
     .ad-banner-top { background: #e4e6eb; border: 2px dashed #999; text-align: center; padding: 15px; font-weight: bold; color: #555; margin-bottom: 20px; border-radius: 6px; }
     .ad-box-sidebar { background: #e4e6eb; border: 2px dashed #999; text-align: center; padding: 40px 10px; font-weight: bold; color: #555; border-radius: 6px; }
+
+    /* FULL ARTICLE POPUP (MODAL) STYLES */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
+    .modal-content { background: white; width: 100%; max-width: 700px; max-height: 90vh; border-radius: 10px; overflow-y: auto; padding: 20px; position: relative; animation: fadeIn 0.3s ease; }
+    .modal-close { position: absolute; top: 12px; right: 15px; font-size: 24px; font-weight: bold; color: #333; cursor: pointer; border: none; background: #eee; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .modal-img { width: 100%; max-height: 350px; object-fit: cover; border-radius: 8px; margin: 15px 0; }
+    .modal-body { font-size: 15px; line-height: 1.7; color: #333; white-space: pre-wrap; margin-top: 15px; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -41,25 +51,41 @@
     </aside>
   </div>
 
+  <!-- POPUP CONTAINER -->
+  <div class="modal-overlay" id="newsModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <span class="news-tag" id="modalCategory">General</span>
+      <h2 id="modalTitle" style="margin-top:10px; font-size: 20px;"></h2>
+      <div class="news-date" id="modalDate" style="margin-top: 5px;"></div>
+      <img id="modalImg" class="modal-img" src="" alt="Full News Image">
+      <div class="modal-body" id="modalDescription"></div>
+    </div>
+  </div>
+
   <script>
+    let globalArticles = [];
+    const defaultImg = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop";
+
     async function loadArticles() {
       const newsGrid = document.getElementById('newsGrid');
       try {
         const response = await fetch('news.json?v=' + new Date().getTime());
         const data = await response.json();
-        const articles = Array.isArray(data) ? data : (data.articles || []);
+        globalArticles = Array.isArray(data) ? data : (data.articles || []);
 
-        if (!articles || articles.length === 0) {
+        if (!globalArticles || globalArticles.length === 0) {
           newsGrid.innerHTML = '<p>Abhi koi article nahi hai. Admin panel se pehla article post karein!</p>';
           return;
         }
 
         newsGrid.innerHTML = '';
-        articles.forEach(article => {
+        globalArticles.forEach((article, index) => {
           const card = document.createElement('div');
           card.className = 'news-card';
+          card.onclick = () => openModal(index);
           card.innerHTML = `
-            <img src="${article.image || 'https://via.placeholder.com/300x180'}" alt="News Image">
+            <img src="${article.image || defaultImg}" onerror="this.src='${defaultImg}'" alt="News Image">
             <div class="news-content">
               <span class="news-tag">${article.category || 'General'}</span>
               <div class="news-date">🗓️ ${article.date || ''}</div>
@@ -71,6 +97,31 @@
         });
       } catch (error) {
         newsGrid.innerHTML = '<p>Khabar load karne mein dikkat aayi.</p>';
+      }
+    }
+
+    function openModal(index) {
+      const article = globalArticles[index];
+      if(!article) return;
+
+      document.getElementById('modalTitle').innerText = article.title || '';
+      document.getElementById('modalCategory').innerText = article.category || 'General';
+      document.getElementById('modalDate').innerText = '🗓️ ' + (article.date || '');
+      document.getElementById('modalImg').src = article.image || defaultImg;
+      document.getElementById('modalDescription').innerText = article.description || '';
+
+      document.getElementById('newsModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('newsModal').style.display = 'none';
+    }
+
+    // Modal background click to close
+    window.onclick = function(event) {
+      const modal = document.getElementById('newsModal');
+      if (event.target === modal) {
+        closeModal();
       }
     }
 
